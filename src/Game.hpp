@@ -14,13 +14,13 @@ class Game
 public:
 	Game();
 
-	//Initialize the game
+	// Initialize the game
 	bool Initialize();
 
-	//Run the game loop
+	// Run the game loop
 	void RunLoop();
 
-	//Cleanup and shut down the game
+	// Cleanup and shut down the game
 	void Shutdown();
 
 private:
