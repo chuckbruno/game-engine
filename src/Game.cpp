@@ -1,15 +1,18 @@
-#include "Game.h"
+#include "Game.hpp"
+#include <particle.hpp>
 
 #include <iostream>
 
 Game::Game()
-{
-	mWindow = nullptr;
-	mIsRunning = true;
-}
+	:mWindow(nullptr), 
+	mRenderer(nullptr), 
+	mTicksCount(0), 
+	mIsRunning(true){}
+
 
 bool Game::Initialize()
 {
+	//Initialize the library
 	int sdlResult = SDL_Init(SDL_INIT_VIDEO);
 	if (sdlResult != 0)
 	{
@@ -17,6 +20,7 @@ bool Game::Initialize()
 		return false;
 	}
 
+	//Create the window
 	mWindow = SDL_CreateWindow("Game Engine", 100, 100, 1024, 768, 0);
 	if (!mWindow)
 	{
@@ -31,8 +35,15 @@ bool Game::Initialize()
 		return false;
 	}
 
-	mCharacterPos.x = (1024.0f - 100.0f) / 2.0f;
-	mCharacterPos.y = (768.0f - 100.0f) / 2.0f;
+	mCharacter = new Particle();
+
+	float x = (1024.0f - 100.f) / 2.0f;
+	float y = (768.0f - 100.0f) / 2.0f;
+
+	mCharacter->setPosition(x, y);
+	mCharacter->setMass(1.0);
+	mCharacter->setAcceleration(Vector2::GRAVITY);
+	mCharacter->setDamping(0.99);
 
 	return true;
 }
@@ -74,74 +85,48 @@ void Game::ProcessInput()
 		mIsRunning = false;
 	}
 
-	mMovementDir.x = 0;
-	mMovementDir.y = 0;
-
-	if (state[SDL_SCANCODE_W])
-	{
-		mMovementDir.y -= 1;
-	}
-	if (state[SDL_SCANCODE_S])
-		mMovementDir.y += 1;
-
-	if (state[SDL_SCANCODE_A])
-		mMovementDir.x -= 1;
-	if (state[SDL_SCANCODE_D])
-		mMovementDir.x += 1;
 }
 
 void Game::UpdateGame()
 {
+	//Wait until 16ms has elapsed since last frame
 	while (!SDL_TICKS_PASSED(SDL_GetTicks(), mTicksCount + 16));
+	
+	//Delta time is the difference in ticks from last frame
+	//(converted to second)
 	float deltaTime = (SDL_GetTicks() - mTicksCount) / 1000.0f;
+	//Update tick counts(for next frame)
 	mTicksCount = SDL_GetTicks();
 
+	//Clamp maximum delta time value
 	if (deltaTime > 0.05f)
 	{
 		deltaTime = 0.05f;
 	}
 
-	mCharacterPos.x += mMovementDir.x * 300.0f * deltaTime;
-	mCharacterPos.y += mMovementDir.y * 300.0f * deltaTime;
-
-	float minXPos = 100.0f / 2.0f;
-	float minYPos = 100.0f / 2.0f;
-
-	float maxXPos = 1024.0f - 100.0f / 2.0f;
-	float maxYPos = 768.0f - 100.0f / 2.0f;
-
-	if (mCharacterPos.x < minXPos)
-	{
-		mCharacterPos.x = minXPos;
-	}
-	else if (mCharacterPos.x > maxXPos)
-	{
-		mCharacterPos.x = maxXPos;
-	}
-
-	if (mCharacterPos.y < minYPos)
-	{
-		mCharacterPos.y = minYPos;
-	}
-	else if (mCharacterPos.y > maxYPos)
-	{
-		mCharacterPos.y = maxYPos;
-	}
+	mCharacter->integrate(deltaTime);
 }
 
 void Game::GenerateOutput()
 {
-	SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, 255);
+	//Set background color
+	SDL_SetRenderDrawColor(mRenderer, 0, 0, 255, 255);
+	//Clear the back buffer
 	SDL_RenderClear(mRenderer);
 
-	SDL_SetRenderDrawColor(mRenderer, 0, 0, 255, 255);
+	//Set the character's color
+	SDL_SetRenderDrawColor(mRenderer, 255, 255, 255, 255);
 	
+	//Draw the character
+	Vector2 currectPosition = mCharacter->getPosition();
 	SDL_Rect character{
-		static_cast<int>(mCharacterPos.x - 50),
-		static_cast<int>(mCharacterPos.y - 50),
+		static_cast<int>(currectPosition.x - 50),
+		static_cast<int>(currectPosition.y - 50),
 		100, 100
 	};
 
 	SDL_RenderFillRect(mRenderer, &character);
+
+	//Swap the front and back buffers
 	SDL_RenderPresent(mRenderer);
 }
