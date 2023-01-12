@@ -5,6 +5,8 @@
 
 #include "core.hpp"
 #include <assert.h>
+#include <corecrt_math.h>
+
 
 class Particle
 {
@@ -93,6 +95,40 @@ public:
 		velocity *= powf(damping, deltaTime);
 	}
 
+	void getAcceleration(Vector2* accPtr) const
+	{
+		*accPtr = acceleration;
+	}
+
+	Vector2 getAcceleration() const
+	{
+		return acceleration;
+	}
+
+	float getInverseMass() const
+	{
+		return inverseMass;
+	}
+
+	void setVelocity(const Vector2& velPtr)
+	{
+		velocity = velPtr;
+	}
+
+	void setVelocity(const float x, const float y, const float z)
+	{
+		velocity.x = x;
+	}
+
+	void getVelocity(Vector2* velPtr) const
+	{
+		*velPtr = velocity;
+	}
+
+	Vector2 getVelocity() const
+	{
+		return velocity;
+	}
 
 };
 #endif

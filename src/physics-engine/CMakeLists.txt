@@ -1,2 +1,2 @@
 cmake_minimum_required (VERSION 3.8)
-add_library(PhysicsEngine core.cpp)
+add_library(PhysicsEngine core.cpp "include/pcontact.hpp" "pcontact.cpp" "include/pcontactresolver.hpp" "pcontactresolver.cpp" "include/pcontactgenerator.hpp" "include/groundcontact.hpp" "groundcontact.cpp")

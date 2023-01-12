@@ -1,5 +1,6 @@
 #include "Game.hpp"
 #include <particle.hpp>
+#include <groundcontact.hpp>
 
 #include <iostream>
 
@@ -7,7 +8,9 @@ Game::Game()
 	:mWindow(nullptr), 
 	mRenderer(nullptr), 
 	mTicksCount(0), 
-	mIsRunning(true){}
+	mIsRunning(true),
+	maxContacts(10)
+{}
 
 
 bool Game::Initialize()
@@ -35,6 +38,8 @@ bool Game::Initialize()
 		return false;
 	}
 
+	resolver = new ParticleContactResolver(5);
+
 	mCharacter = new Particle();
 
 	float x = (1024.0f - 100.f) / 2.0f;
@@ -44,6 +49,14 @@ bool Game::Initialize()
 	mCharacter->setMass(1.0);
 	mCharacter->setAcceleration(Vector2::GRAVITY);
 	mCharacter->setDamping(0.99);
+
+	particles.push_back(mCharacter);
+
+	GroundContact* groundContactGenerator = new GroundContact();
+	groundContactGenerator->init(particles);
+	contactGenerators.push_back(groundContactGenerator);
+
+	contacts = new ParticleContact[maxContacts];
 
 	return true;
 }
@@ -87,6 +100,25 @@ void Game::ProcessInput()
 
 }
 
+unsigned Game::generateContacts()
+{
+	unsigned limit = maxContacts;
+	ParticleContact* nextContact = contacts;
+
+	for (auto g = contactGenerators.begin(); g != contactGenerators.end(); g++)
+	{
+		unsigned used = (*g)->addContact(nextContact, limit);
+		limit -= used;
+		nextContact += used;
+
+		// maximum number of collisions reached
+		if (limit <= 0)
+			break;
+	}
+
+	return maxContacts - limit;
+}
+
 void Game::UpdateGame()
 {
 	//Wait until 16ms has elapsed since last frame
@@ -105,6 +137,13 @@ void Game::UpdateGame()
 	}
 
 	mCharacter->integrate(deltaTime);
+
+	unsigned usedContacts = generateContacts();
+	if (usedContacts)
+	{
+		resolver->setIterations(usedContacts * 2);
+		resolver->resolveContacts(contacts, usedContacts, deltaTime);
+	}
 }
 
 void Game::GenerateOutput()

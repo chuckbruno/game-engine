@@ -11,3 +11,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # TODO: Add tests and install targets if needed.
 
 add_subdirectory("src")
+# add_subdirectory("src/physics-engine")
+target_include_directories(GameEngine PUBLIC "${PROJECT_SOURCE_DIR}/src/physics-engine/include")
+
+
